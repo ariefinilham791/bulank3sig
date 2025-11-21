@@ -234,7 +234,6 @@ export default function Home() {
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></span>
                     <span>Tersedia</span>
                   </div>
-                  <div className="text-gray-500 text-sm font-medium">2024</div>
                 </div>
 
                 <div className="flex items-center text-purple-600 font-bold text-lg group-hover:gap-3 transition-all duration-300">
