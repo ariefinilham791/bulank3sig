@@ -21,6 +21,7 @@ type Particle = {
 
 export default function Home() {
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [loadingPdf, setLoadingPdf] = useState<string | null>(null);
 
   const pdfFiles: PdfFile[] = [
     { name: 'Lomba Badminton', file: '/LombaBadminton.pdf', icon: '🏸' },
@@ -67,11 +68,81 @@ export default function Home() {
   }, []);
 
   const openPdf = (file: string) => {
-    window.open(file, '_blank');
+    // Set loading state
+    setLoadingPdf(file);
+
+    // Open PDF in new tab immediately (non-blocking)
+    const newWindow = window.open('about:blank', '_blank');
+
+    if (newWindow) {
+      // Show loading message
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Loading PDF...</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background: linear-gradient(135deg, #3f69fb 0%, #5a7efc 100%);
+                font-family: system-ui, -apple-system, sans-serif;
+              }
+              .loader {
+                text-align: center;
+                color: white;
+              }
+              .spinner {
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid white;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              h2 {
+                margin: 0 0 10px 0;
+                font-size: 24px;
+              }
+              p {
+                margin: 0;
+                opacity: 0.9;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="loader">
+              <div class="spinner"></div>
+              <h2>⏳ Memuat PDF...</h2>
+              <p>Mohon tunggu, file sedang dimuat</p>
+            </div>
+          </body>
+        </html>
+      `);
+
+      // Navigate to actual PDF
+      setTimeout(() => {
+        newWindow.location.href = file;
+        setLoadingPdf(null);
+      }, 100);
+    } else {
+      // Fallback if popup blocked
+      window.location.href = file;
+      setLoadingPdf(null);
+    }
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ background: '#3f69fb' }}>
       {/* Animated Particles Background */}
       <div className="absolute inset-0 overflow-hidden">
         {particles.map((particle) => (
@@ -91,9 +162,9 @@ export default function Home() {
       </div>
 
       {/* Decorative Glowing Elements */}
-      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-cyan-400/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-pink-400/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse"></div>
-      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse"></div>
+      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
 
       {/* Grid Pattern Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
@@ -127,6 +198,16 @@ export default function Home() {
               onClick={() => openPdf(pdf.file)}
               className="group relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl hover:shadow-cyan-400/50 transition-all duration-500 cursor-pointer transform hover:-translate-y-3 hover:scale-105 overflow-hidden border-2 border-white/50"
             >
+              {/* Loading Overlay */}
+              {loadingPdf === pdf.file && (
+                <div className="absolute inset-0 bg-blue-600/90 backdrop-blur-sm z-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-3"></div>
+                    <p className="text-white font-semibold">Membuka PDF...</p>
+                  </div>
+                </div>
+              )}
+
               {/* Glowing Edge Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/0 via-purple-400/0 to-pink-400/0 group-hover:from-cyan-400/20 group-hover:via-purple-400/20 group-hover:to-pink-400/20 transition-all duration-500"></div>
 
@@ -153,6 +234,7 @@ export default function Home() {
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></span>
                     <span>Tersedia</span>
                   </div>
+                  <div className="text-gray-500 text-sm font-medium">2024</div>
                 </div>
 
                 <div className="flex items-center text-purple-600 font-bold text-lg group-hover:gap-3 transition-all duration-300">
