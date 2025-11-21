@@ -36,6 +36,8 @@ export default function Home() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [loadingPdf, setLoadingPdf] = useState<string | null>(null);
   const [showSchedule, setShowSchedule] = useState<boolean>(false);
+  const [showPdfModal, setShowPdfModal] = useState<boolean>(false);
+  const [selectedPdf, setSelectedPdf] = useState<string>('');
 
   const pdfFiles: PdfFile[] = [
     { name: 'Lomba Badminton', file: '/LombaBadminton.pdf', icon: '🏸' },
@@ -118,71 +120,13 @@ export default function Home() {
   }, []);
 
   const openPdf = (file: string) => {
-    setLoadingPdf(file);
-    const newWindow = window.open('about:blank', '_blank');
+    setSelectedPdf(file);
+    setShowPdfModal(true);
+  };
 
-    if (newWindow) {
-      newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Loading PDF...</title>
-            <style>
-              body {
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                background: linear-gradient(135deg, #3f69fb 0%, #5a7efc 100%);
-                font-family: system-ui, -apple-system, sans-serif;
-              }
-              .loader {
-                text-align: center;
-                color: white;
-              }
-              .spinner {
-                border: 4px solid rgba(255, 255, 255, 0.3);
-                border-top: 4px solid white;
-                border-radius: 50%;
-                width: 50px;
-                height: 50px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-              }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-              h2 {
-                margin: 0 0 10px 0;
-                font-size: 24px;
-              }
-              p {
-                margin: 0;
-                opacity: 0.9;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="loader">
-              <div class="spinner"></div>
-              <h2>📄 Memuat PDF...</h2>
-              <p>Mohon tunggu, file sedang dimuat</p>
-            </div>
-          </body>
-        </html>
-      `);
-
-      setTimeout(() => {
-        newWindow.location.href = file;
-        setLoadingPdf(null);
-      }, 100);
-    } else {
-      window.location.href = file;
-      setLoadingPdf(null);
-    }
+  const closePdfModal = () => {
+    setShowPdfModal(false);
+    setSelectedPdf('');
   };
 
   return (
@@ -265,6 +209,9 @@ export default function Home() {
                       <h2 className="text-xl md:text-3xl lg:text-4xl font-black text-white drop-shadow-lg">
                         Match Schedule
                       </h2>
+                      <p className="text-blue-100 text-xs md:text-base font-semibold mt-1">
+                        Bulankesig Competition 2025
+                      </p>
                     </div>
                   </div>
                   <div className="bg-white/20 px-4 md:px-5 py-2 md:py-3 rounded-xl backdrop-blur-sm border-2 border-white/30">
@@ -394,6 +341,13 @@ export default function Home() {
                   </>
                 ))}
               </div>
+
+              {/* Footer */}
+              <div className="bg-blue-600 px-4 md:px-6 py-3 md:py-4 text-center">
+                <p className="text-white font-bold text-xs md:text-base">
+                  🎯 Semua pertandingan akan dilaksanakan sesuai jadwal yang telah ditentukan
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -461,6 +415,81 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* PDF Modal */}
+      {showPdfModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          {/* Modal Container */}
+          <div className="relative w-full h-full max-w-7xl max-h-[95vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-blue-600 px-4 md:px-6 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl md:text-3xl">📄</span>
+                <h3 className="text-white font-black text-lg md:text-xl">
+                  Preview PDF
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Download Button */}
+                <a
+                  href={selectedPdf}
+                  download
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all duration-300 flex items-center gap-2"
+                >
+                  <span>⬇️</span>
+                  <span className="hidden md:inline">Download</span>
+                </a>
+                {/* Close Button */}
+                <button
+                  onClick={closePdfModal}
+                  className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg font-bold text-xl transition-all duration-300 w-10 h-10 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* PDF Viewer */}
+            <div className="flex-1 overflow-hidden bg-gray-100 relative">
+              {/* Loading Indicator */}
+              <div className="absolute inset-0 flex items-center justify-center bg-blue-50 z-10">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-blue-600 font-bold text-lg">Memuat PDF...</p>
+                  <p className="text-gray-600 text-sm mt-2">Mohon tunggu sebentar</p>
+                </div>
+              </div>
+
+              {/* PDF iframe */}
+              <iframe
+                src={selectedPdf}
+                className="w-full h-full"
+                title="PDF Preview"
+                onLoad={(e) => {
+                  // Hide loading indicator when PDF loads
+                  const loadingDiv = e.currentTarget.previousElementSibling as HTMLElement;
+                  if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                  }
+                }}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-100 px-4 md:px-6 py-3 flex items-center justify-between shrink-0 border-t border-gray-300">
+              <p className="text-gray-600 text-sm">
+                💡 <span className="font-semibold">Tip:</span> Gunakan scroll untuk navigasi, atau download untuk akses offline
+              </p>
+              <button
+                onClick={closePdfModal}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
