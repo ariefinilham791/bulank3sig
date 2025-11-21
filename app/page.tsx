@@ -26,7 +26,7 @@ export default function Home() {
   const pdfFiles: PdfFile[] = [
     { name: 'Lomba Badminton', file: '/LombaBadminton.pdf', icon: '🏸' },
     { name: 'Lomba Cerdas Cermat', file: '/LombaCerdasCermat.pdf', icon: '🧠' },
-    { name: 'Lomba E-Sport', file: '/LombaEsport.pdf', icon: '🎮' },
+    { name: 'Lomba E-Sport', file: '/LombaEsportFix.pdf', icon: '🎮' },
     { name: 'Lomba Mini Soccer', file: '/LombaMiniSoccer.pdf', icon: '⚽' },
     { name: 'Lomba Pemadan Api', file: '/LombaPemadamApi.pdf', icon: '🧯' },
     { name: 'Lomba Tenis Meja', file: '/LombaTenisMeja.pdf', icon: '🏓' },
