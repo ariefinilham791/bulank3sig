@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-// Icon Components
 const CalendarIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -11,13 +10,13 @@ const CalendarIcon = () => (
 );
 
 const FileTextIcon = () => (
-  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-6 h-6 text-[#3f69fb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
 
 const FileTextIconSmall = () => (
-  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
@@ -64,6 +63,86 @@ const FilterIcon = () => (
   </svg>
 );
 
+// Custom Calendar Component
+const CustomCalendar = ({ selected, onSelect }: { selected?: Date, onSelect: (date?: Date) => void }) => {
+  const [currentMonth, setCurrentMonth] = useState(selected || new Date());
+  
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  };
+  
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  };
+  
+  const selectDate = (day: number) => {
+    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    onSelect(newDate);
+  };
+  
+  const isSelected = (day: number) => {
+    if (!selected) return false;
+    return selected.getDate() === day && 
+           selected.getMonth() === currentMonth.getMonth() && 
+           selected.getFullYear() === currentMonth.getFullYear();
+  };
+  
+  const days = [];
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(<div key={`empty-${i}`} className="p-2"></div>);
+  }
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    days.push(
+      <button
+        key={day}
+        onClick={() => selectDate(day)}
+        className={`p-2 text-sm rounded-lg hover:bg-blue-100 transition-colors ${
+          isSelected(day) 
+            ? 'bg-[#3f69fb] text-white font-semibold hover:bg-[#3f69fb]' 
+            : 'text-neutral-700'
+        }`}
+      >
+        {day}
+      </button>
+    );
+  }
+  
+  return (
+    <div className="w-72 bg-white rounded-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={prevMonth} className="p-1 hover:bg-blue-50 rounded transition-colors">
+          <ChevronLeftIcon />
+        </button>
+        <div className="font-semibold text-neutral-900">
+          {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+        </div>
+        <button onClick={nextMonth} className="p-1 hover:bg-blue-50 rounded transition-colors">
+          <ChevronRightIcon />
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {dayNames.map(day => (
+          <div key={day} className="text-xs font-semibold text-neutral-500 text-center p-2">
+            {day}
+          </div>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-7 gap-1">
+        {days}
+      </div>
+    </div>
+  );
+};
+
 type PdfFile = {
   name: string;
   file: string;
@@ -76,23 +155,17 @@ type Match = {
   timYangBertanding: string;
 };
 
-type WeekGroup = {
-  weekNumber: number;
-  weekLabel: string;
-  startDate: string;
-  endDate: string;
-  matches: Match[];
-};
-
 export default function Home() {
-  const [showSchedule, setShowSchedule] = useState<boolean>(false);
-  const [showPdfModal, setShowPdfModal] = useState<boolean>(false);
-  const [selectedPdf, setSelectedPdf] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
   
   const itemsPerPage = 10;
 
@@ -235,56 +308,6 @@ export default function Home() {
     { lomba: 'TENIS MEJA', tanggal: '2026-01-29', timYangBertanding: 'EXHIBITION – Pertandingan' },
   ];
 
-  const groupMatchesByWeek = (): WeekGroup[] => {
-    const weeks: WeekGroup[] = [];
-    const sortedMatches = [...allMatches].sort((a, b) => 
-      new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime()
-    );
-
-    let currentWeek: WeekGroup | null = null;
-    let weekNumber = 1;
-
-    sortedMatches.forEach(match => {
-      const matchDate = new Date(match.tanggal);
-      
-      if (!currentWeek) {
-        currentWeek = {
-          weekNumber,
-          weekLabel: `Week ${weekNumber}`,
-          startDate: match.tanggal,
-          endDate: match.tanggal,
-          matches: [match]
-        };
-      } else {
-        const weekStart = new Date(currentWeek.startDate);
-        const daysDiff = Math.floor((matchDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysDiff <= 6) {
-          currentWeek.matches.push(match);
-          currentWeek.endDate = match.tanggal;
-        } else {
-          weeks.push(currentWeek);
-          weekNumber++;
-          currentWeek = {
-            weekNumber,
-            weekLabel: `Week ${weekNumber}`,
-            startDate: match.tanggal,
-            endDate: match.tanggal,
-            matches: [match]
-          };
-        }
-      }
-    });
-
-    if (currentWeek) {
-      weeks.push(currentWeek);
-    }
-
-    return weeks;
-  };
-
-  const weekGroups = groupMatchesByWeek();
-
   const getFilteredMatches = (): Match[] => {
     let filtered = allMatches;
 
@@ -297,8 +320,13 @@ export default function Home() {
 
     if (startDate && endDate) {
       filtered = filtered.filter(match => {
-        const matchDate = match.tanggal;
-        return matchDate >= startDate && matchDate <= endDate;
+        const matchDate = new Date(match.tanggal);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        matchDate.setHours(0, 0, 0, 0);
+        return matchDate >= start && matchDate <= end;
       });
     }
 
@@ -306,26 +334,18 @@ export default function Home() {
   };
 
   const filteredMatches = getFilteredMatches();
-  
-  // Pagination calculations
   const totalPages = Math.ceil(filteredMatches.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentMatches = filteredMatches.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
   const handleFilterChange = () => {
     setCurrentPage(1);
   };
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const openPdf = (file: string) => {
@@ -340,92 +360,74 @@ export default function Home() {
 
   const resetFilters = () => {
     setSearchQuery('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(undefined);
+    setEndDate(undefined);
     setCurrentPage(1);
-  };
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const goToPrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      <header className="relative border-b bg-gradient-to-br from-white via-blue-50/30 to-white backdrop-blur-sm">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6 md:py-8 relative z-10">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo & Title Section */}
-          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-            {/* Logo with glow effect */}
-            <div className="relative flex-shrink-0 group">
-              <div className="absolute inset-0 bg-[#3f69fb] rounded-xl md:rounded-2xl blur-md opacity-30 group-hover:opacity-50 transition-all duration-300"></div>
-              <Image
-                src="/logo.png"
-                alt="Bulan K3 SIG"
-                width={48}
-                height={48}
-                className="rounded-xl md:rounded-2xl relative z-10 shadow-xl md:w-16 md:h-16 w-12 h-12"
-                priority
-              />
-            </div>
-
-            {/* Title & Subtitle */}
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-neutral-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent truncate">
-                Bulan K3 SIG
-              </h1>
-              <p className="text-xs md:text-sm text-neutral-500 mt-0.5 truncate">#befitbesafebeachampion</p>
-            </div>
-          </div>
-
-          {/* Schedule Button - Compact on Mobile */}
-          <button
-            onClick={() => setShowSchedule(!showSchedule)}
-            className="flex-shrink-0 group relative overflow-hidden"
-          >
-            {/* Button glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg md:rounded-xl opacity-100 group-hover:opacity-90 transition-opacity"></div>
-            
-            {/* Button content */}
-            <div className="relative px-3 py-2 md:px-5 md:py-3 flex items-center gap-1.5 md:gap-2">
-              <CalendarIcon />
-              <span className="text-white font-semibold text-sm md:text-base hidden sm:inline">
-                {showSchedule ? 'Hide' : 'Schedule'}
-              </span>
-            </div>
-
-            {/* Shine effect on hover */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          </button>
+      <header className="relative border-b bg-white shadow-sm">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#3f69fb]/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-[#5b7efb]/10 to-transparent rounded-full blur-3xl"></div>
         </div>
 
-      </div>
-    </header>
+        <div className="container mx-auto px-4 py-6 md:py-8 relative z-10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
+              <div className="relative flex-shrink-0 group">
+                <div className="absolute -inset-2 bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] rounded-2xl md:rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-all duration-500 animate-pulse"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] rounded-xl md:rounded-2xl blur-md opacity-50 group-hover:opacity-75 transition-all duration-300"></div>
+                <div className="relative bg-white p-1 rounded-xl md:rounded-2xl shadow-2xl ring-2 ring-[#3f69fb]/20 group-hover:ring-[#3f69fb]/40 transition-all duration-300">
+                  <Image
+                    src="/logo.png"
+                    alt="Bulan K3 SIG"
+                    width={56}
+                    height={56}
+                    className="rounded-lg md:rounded-xl relative z-10 md:w-20 md:h-20 w-14 h-14 transform group-hover:scale-105 transition-transform duration-300"
+                    priority
+                  />
+                </div>
+                <div className="absolute -inset-3 border-2 border-[#3f69fb]/20 rounded-2xl md:rounded-3xl animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{animationDuration: '3s'}}></div>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-[#3f69fb] via-[#5b7efb] to-[#3f69fb] bg-clip-text text-transparent truncate drop-shadow-sm">
+                  Bulan K3 SIG
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-1 w-8 bg-gradient-to-r from-[#3f69fb] to-transparent rounded-full"></div>
+                  <p className="text-xs md:text-sm text-neutral-600 font-semibold truncate tracking-wide">
+                    #befitbesafebeachampion
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowSchedule(!showSchedule)}
+              className="flex-shrink-0 group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] rounded-xl opacity-100 group-hover:opacity-90 transition-all shadow-lg group-hover:shadow-xl"></div>
+              
+              <div className="relative px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-2">
+                <CalendarIcon />
+                <span className="text-white font-bold text-sm md:text-base hidden sm:inline">
+                  {showSchedule ? 'Hide Schedule' : 'View Schedule'}
+                </span>
+              </div>
+
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+            </button>
+          </div>
+        </div>
+      </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Schedule Section */}
         {showSchedule && (
           <div className="mb-12">
             <div className="bg-white rounded-xl border border-blue-100 shadow-lg overflow-hidden">
-              {/* Schedule Header with Week Navigation */}
               <div className="bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] px-6 py-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -442,11 +444,9 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Filters - Collapsible */}
               {showFilters && (
                 <div className="border-b bg-gradient-to-r from-blue-50 to-white px-6 py-6">
                   <div className="space-y-4">
-                    {/* Search Bar */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
                         Search Matches
@@ -468,39 +468,67 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Date Range Filter */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-2">
                           Start Date
                         </label>
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => {
-                            setStartDate(e.target.value);
-                            handleFilterChange();
-                          }}
-                          className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3f69fb] focus:border-transparent transition-all text-neutral-900"
-                        />
+                        <div className="relative">
+                          <button
+                            onClick={() => {
+                              setShowStartCalendar(!showStartCalendar);
+                              setShowEndCalendar(false);
+                            }}
+                            className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3f69fb] focus:border-transparent transition-all text-neutral-900 text-left flex items-center justify-between hover:bg-blue-50"
+                          >
+                            <span>{startDate ? startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Select start date'}</span>
+                            <CalendarIcon />
+                          </button>
+                          {showStartCalendar && (
+                            <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-blue-200 p-3">
+                              <CustomCalendar
+                                selected={startDate}
+                                onSelect={(date) => {
+                                  setStartDate(date);
+                                  setShowStartCalendar(false);
+                                  handleFilterChange();
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-2">
                           End Date
                         </label>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => {
-                            setEndDate(e.target.value);
-                            handleFilterChange();
-                          }}
-                          className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3f69fb] focus:border-transparent transition-all text-neutral-900"
-                        />
+                        <div className="relative">
+                          <button
+                            onClick={() => {
+                              setShowEndCalendar(!showEndCalendar);
+                              setShowStartCalendar(false);
+                            }}
+                            className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3f69fb] focus:border-transparent transition-all text-neutral-900 text-left flex items-center justify-between hover:bg-blue-50"
+                          >
+                            <span>{endDate ? endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Select end date'}</span>
+                            <CalendarIcon />
+                          </button>
+                          {showEndCalendar && (
+                            <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-blue-200 p-3">
+                              <CustomCalendar
+                                selected={endDate}
+                                onSelect={(date) => {
+                                  setEndDate(date);
+                                  setShowEndCalendar(false);
+                                  handleFilterChange();
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Reset Button */}
                     <div className="flex justify-end">
                       <button
                         onClick={resetFilters}
@@ -514,18 +542,17 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Table - Desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider w-20">
                         No
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider w-1/4">
                         Competition
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider w-1/6">
                         Date
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-[#3f69fb] uppercase tracking-wider">
@@ -544,17 +571,17 @@ export default function Home() {
                       currentMatches.map((match, index) => (
                         <tr key={index} className="hover:bg-blue-50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-700">
-                            {index + 1}
+                            {startIndex + index + 1}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] text-white shadow-sm">
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#3f69fb] to-[#5b7efb] text-white shadow-sm whitespace-nowrap">
                               {match.lomba}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900 font-medium">
                             {formatDate(match.tanggal)}
                           </td>
-                          <td className="px-6 py-4 text-sm text-neutral-700">
+                          <td className="px-6 py-4 text-sm text-neutral-700 leading-relaxed">
                             {match.timYangBertanding}
                           </td>
                         </tr>
@@ -564,7 +591,6 @@ export default function Home() {
                 </table>
               </div>
 
-              {/* Cards - Mobile */}
               <div className="md:hidden divide-y divide-blue-100">
                 {currentMatches.length === 0 ? (
                   <div className="px-6 py-12 text-center text-neutral-500">
@@ -590,7 +616,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Pagination */}
               {filteredMatches.length > itemsPerPage && (
                 <div className="border-t bg-white px-6 py-4">
                   <div className="flex items-center justify-between">
@@ -600,14 +625,13 @@ export default function Home() {
                     
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={goToPrevPage}
+                        onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
                         disabled={currentPage === 1}
                         className="p-2 text-neutral-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-300"
                       >
                         <ChevronLeftIcon />
                       </button>
 
-                      {/* Page Numbers */}
                       <div className="hidden sm:flex items-center gap-1">
                         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                           let pageNum;
@@ -624,7 +648,7 @@ export default function Home() {
                           return (
                             <button
                               key={pageNum}
-                              onClick={() => goToPage(pageNum)}
+                              onClick={() => setCurrentPage(pageNum)}
                               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 currentPage === pageNum
                                   ? 'bg-[#3f69fb] text-white shadow-sm'
@@ -638,7 +662,7 @@ export default function Home() {
                       </div>
 
                       <button
-                        onClick={goToNextPage}
+                        onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
                         className="p-2 text-neutral-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-300"
                       >
@@ -652,7 +676,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Documents Section */}
         <div>
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-neutral-900">Competition Documents</h2>
@@ -693,14 +716,12 @@ export default function Home() {
         </div>
       </main>
 
-      {/* PDF Modal */}
       {showPdfModal && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closePdfModal}></div>
           
           <div className="relative h-full flex items-center justify-center p-4">
             <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
-              {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-[#3f69fb] to-[#5b7efb]">
                 <div className="flex items-center gap-3">
                   <FileTextIconSmall />
@@ -724,7 +745,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* PDF Viewer */}
               <div className="flex-1 relative bg-neutral-100">
                 <iframe
                   src={selectedPdf}
